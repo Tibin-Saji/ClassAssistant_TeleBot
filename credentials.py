@@ -1,0 +1,7 @@
+BOT_USER_NAME = '@mr_bbatch_bot'
+BOT_TOKEN = '2007930033:AAHI7Bh5akhO9I-G-50PHlHi8FGw-Zz-7pE'
+# GRP_ID = -1001576353727 #Chumma
+GRP_ID = -1001588259132 #Main
+ADMINS = ['yuckypickles', 'tibinsaji', 'Siri_229']
+CREATOR_USER_ID = 1941055170
+CREATOR_USER_NAME = 'tibinsaji'
