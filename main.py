@@ -188,7 +188,7 @@ def class_markup(change_type:str):
     markup = types.InlineKeyboardMarkup()
     markup.row_width = 1
     if change_type == 'a':
-        cls_list = [list(SUBJECTS.values[i] for i in range(1, len(SUBJECTS.values())))]
+        cls_list = [list(SUBJECTS.values())[i] for i in range(1, len(list(SUBJECTS.values())))]
     else:
         cls_list = [list(TIMETABLE.values())[i][datetime.today().weekday()] for i in range(len(TIMETABLE.values()))]
     for cls in cls_list:
@@ -458,8 +458,18 @@ def OffDaysFunc(message):
 
 @bot.message_handler(commands=["addclass"])
 def AddClass(message):
+    global chat_id
+    chat_id = message.chat.id
+    
+    if is_not_CR(message):
+      return 'ok'
     bot.set_state(message.chat.id, 4)
     bot.send_message(chat_id=message.chat.id, text="Please select the class to be added today.", reply_markup=class_markup('a'))
+
+@bot.message_handler(commands=['cancel'])
+def CancelFunc(message):
+    bot.delete_state(message.chat.id)
+    bot.send_message(message.chat.id, "The command has been cancelled")
 
 def UpcomingClass(slot):
     subject = TIMETABLE[slot][datetime.today().weekday()]
