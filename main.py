@@ -14,7 +14,6 @@ from general import (
     SLOTS,
     SUBJECTS,
     TIMETABLE,
-    time_dict,
     compare_time,
     edit_time,
     SUB_ATTENDANCE,
@@ -376,7 +375,7 @@ def AddClassFunc(message):
 def AddClass_Time(message):
     global temp     # Full name of the subject. Is a list but has only one element
     add_class = db['added']     # Short name of subject with time seperated by '|'
-    class_time = f"{timestr_to_ist(message.text)}"
+    class_time = edit_time(message.text, hour=-5, minute=-30) + ":00"
     class_date = f'{datetime.today().strftime("%Y-%m-%d")} {class_time}'       # 2021-10-28 19:00:00
 
     sched.add_job(ClassMessage, trigger='date', run_date=class_date, id=f'a_{temp[0]}', args=[temp[0]])
@@ -434,9 +433,9 @@ def TimeTableFunc(message):
                     n_week = int(0)
             
         if isTibin: 
-            offset_time = (int(3), int(0))
+            offset_time = (int(-2), int(-30))
         else:
-            offset_time = (int(5), int(30))
+            offset_time = (int(0), int(0))
 
         msg = week_full[n_week] + ' :\n\n'
         for slot in SLOTS:
@@ -449,7 +448,7 @@ def TimeTableFunc(message):
                 class_name = f"Cancelled {subject_short}"
 
             slot_time = edit_time(slot, hour = offset_time[0], minute = offset_time[1])
-            msg += f'{slot_time[0]:02} : {slot_time[1]:02}    {class_name}\n'
+            msg += f'{slot_time}     {class_name}\n'
 
         bot.send_message(chat_id=message.chat.id, text=msg)
     
@@ -468,7 +467,10 @@ def OffDaysFunc_Days(message):
     bot.delete_state(message.chat.id)
     global SHOW_NOTIF
     SHOW_NOTIF = False
-    sched.add_job(turn_on_notif, trigger='date', run_date=message.text+':00', id='trun_on_notif', replace_existing=True)       # This datetime is in standard time.
+    run_date = message.text.split()
+    run_date[1] = edit_time(run_date[1], hour= -5, minute= -30) + ":00"
+    run_date = run_date[0] + " " + run_date[1]
+    sched.add_job(turn_on_notif, trigger='date', run_date=run_date, id='trun_on_notif', replace_existing=True)       # This datetime is in standard time.
     bot.send_message(chat_id=message.chat.id, text=f"Notification turned off for {message.text} days")
 
 @bot.message_handler(commands = ["offdays"])
@@ -486,8 +488,8 @@ def UpcomingClass(slot):
     ClassMessage(subject)
 
 for slot in SLOTS:
-    _time=edit_time(slot,just_time= True, minute= -5)
-    sched.add_job(UpcomingClass, 'cron', day_of_week= 'mon-fri', hour = _time[0], minute= _time[1], second= int(0), args = [slot], id= f'{slot[0]} {slot[1]}', replace_existing=True)
+    _time=edit_time(slot, minute= -5).split(':')
+    sched.add_job(UpcomingClass, 'cron', day_of_week= 'mon-fri', hour = _time[0], minute= _time[1], second= int(0), args = [slot], id= f'{slot}', replace_existing=True)
 
 def reset_daily():
     db['events'] = []

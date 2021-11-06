@@ -70,14 +70,10 @@ def str_to_tuple(time_str:str):
     time_str = time_str.split(':')
     return tuple(int(time_str[0]), int(time_str[1]))
 
-# def time_dict(DT:str):
-#     DT = DT.split(':')
-#     return (int(DT[0]), int(DT[1]))
-
 def compare_time(DT_1: str, DT_2: str):
     DT_1 = str_to_tuple(DT_1)
     DT_2 = str_to_tuple(DT_2)
-    
+
     if DT_1[0] > DT_2[0]:
         return 'greater'
     elif DT_1[0] < DT_2[0]:
@@ -88,7 +84,7 @@ def compare_time(DT_1: str, DT_2: str):
         elif DT_1[1] < DT_2[1]:
             return 'lesser'
 
-def edit_time(DT:str, day=0, hour=0, minute=0, second=0):
+def edit_time(DT:str, day:int=0, hour:int=0, minute:int=0, second:int=0):
     DT = str_to_tuple(DT)
     DateTime = datetime.combine(date.today(), time(hour=DT[0], minute=DT[1], second=0)) + timedelta(days=day,hours= hour, minutes= minute, seconds= second)
     return DateTime.strftime('%H:%M')
