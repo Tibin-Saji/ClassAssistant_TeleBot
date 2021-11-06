@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta, time, date
 
-slot1 = (int(2),int(30))    # 7:55       5:25
-slot2 = (int(3),int(30))    # 8:55       6:25
-slot3 = (int(4),int(45))    # 10:10      7:40
-slot4 = (int(5),int(45))    # 11:10      8:40
-slot5 = (int(7),int(30))    # 12:55      10:25
-slot6 = (int(8),int(30))    # 13:55      11:25
-slot7 = (int(11),int(30))    # 16:55      14:25         11 30
+slot1 = "08:00"    # 7:55       5:25
+slot2 = "09:00"    # 8:55       6:25
+slot3 = "10:15"    # 10:10      7:40
+slot4 = "11:15"    # 11:10      8:40
+slot5 = "13:00"    # 12:55      10:25
+slot6 = "14:00"    # 13:55      11:25
+slot7 = "17:00"    # 16:55      14:25         11 30
 
 SLOTS = [slot1, slot2, slot3, slot4, slot5, slot6, slot7]
 
@@ -61,7 +61,6 @@ SUB_ATTENDANCE = {
     SUBJECTS['VE']  : "", 
     SUBJECTS['MA3'] : "",
     SUBJECTS['ECNT'] : ""
-    # SUBJECTS['LAB2'] : ""
 }
 
 def tuple_to_str(tpl:tuple):
@@ -71,17 +70,14 @@ def str_to_tuple(time_str:str):
     time_str = time_str.split(':')
     return tuple(int(time_str[0]), int(time_str[1]))
 
-def timeDict(DT, just_time= True):
-    DT = DT.strftime("%Y %m %d %H %M") if type(DT) == datetime else DT
-    DT = DT.split()
-    if just_time:
-        tpl = (int(DT[-2]), int(DT[-1]))
-        return tpl
-    # else:
-    #     dict = {'year': int(DT[0]), 'month': int(DT[1]), 'day': int(DT[2]), 'hour': int(DT[3]), 'minute': int(DT[4])}
-    #     return dict
+# def time_dict(DT:str):
+#     DT = DT.split(':')
+#     return (int(DT[0]), int(DT[1]))
 
-def compare_time(DT_1: tuple, DT_2: tuple):
+def compare_time(DT_1: str, DT_2: str):
+    DT_1 = str_to_tuple(DT_1)
+    DT_2 = str_to_tuple(DT_2)
+    
     if DT_1[0] > DT_2[0]:
         return 'greater'
     elif DT_1[0] < DT_2[0]:
@@ -92,13 +88,7 @@ def compare_time(DT_1: tuple, DT_2: tuple):
         elif DT_1[1] < DT_2[1]:
             return 'lesser'
 
-def edit_time(DT, just_time=True,day=0, hour=0, minute=0, second=0):
-    if just_time:
-        DateTime = datetime.combine(date.today(), time(hour=DT[0], minute=DT[1], second=0)) + timedelta(days=day,hours= hour, minutes= minute, seconds= second)
-        DateTime = DateTime.strftime('%H %M').split()
-        return (int(DateTime[0]), int(DateTime[1]))
-
-    else:
-        DateTime = datetime(year=DT[0],month=DT[1],day=DT[2], hour=DT[3], minute=DT[4], second=0) + timedelta(days=day,hours= hour, minutes= minute, seconds= second)
-        DateTime = DateTime.strftime('%Y %m %d %H %M').split()
-        return {'year': int(DateTime[0]), 'month': int(DateTime[1]), 'day': int(DateTime[2]), 'hour': int(DateTime[3]), 'minute': int(DateTime[4])}
+def edit_time(DT:str, day=0, hour=0, minute=0, second=0):
+    DT = str_to_tuple(DT)
+    DateTime = datetime.combine(date.today(), time(hour=DT[0], minute=DT[1], second=0)) + timedelta(days=day,hours= hour, minutes= minute, seconds= second)
+    return DateTime.strftime('%H:%M')

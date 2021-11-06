@@ -14,7 +14,7 @@ from general import (
     SLOTS,
     SUBJECTS,
     TIMETABLE,
-    timeDict,
+    time_dict,
     compare_time,
     edit_time,
     SUB_ATTENDANCE,
@@ -26,8 +26,6 @@ import random
 global bot
 global TOKEN
 
-global DOC_INDEX
-DOC_INDEX = int(0)
 global EVENT_INDEX
 EVENT_INDEX = int(0)
 
@@ -213,19 +211,17 @@ def StartFunc(message):
 
 @bot.message_handler(commands = ["nextclass"])
 def NextClassFunc(message):
-  currentTime =timeDict(datetime.now())
+  currentTime = edit_time(datetime.now().strftime("%H:%M"), hour = int(5), minute= int(30))
   weekday = datetime.today().weekday()
   msg = "No more class today"
   for slot in SLOTS:
       if  compare_time(slot, currentTime) == 'greater':
-          _Time = edit_time(slot, just_time= True, hour=5, minute=30)
           if weekday in [5, 6]:
               msg = "No class today."
               break
           subject = TIMETABLE[slot][weekday]
           if subject != SUBJECTS['NIL']:
-              Time = f'{_Time[0]:02}:{_Time[1]:02}'
-              msg = "You have " + TIMETABLE[slot][weekday] + " at " + Time
+              msg = "You have {TIMETABLE[slot][weekday]} at {slot}"
               break
   bot.send_message(chat_id=message.chat.id, text=msg)
 
