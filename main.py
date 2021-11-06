@@ -44,10 +44,7 @@ global temp # variable to add the values taken from different state functions
 
 _SUBJECTS = {val: key for key, val in SUBJECTS.items()} # inverted SUBJECTS dict
 
-#####
 global chat_id
-#chat_id = crd.CREATOR_USER_ID
-#####
 
 db['events'] = []
 db['postponed'] = []
@@ -61,6 +58,13 @@ sched.remove_all_jobs()
 
 bot = TeleBot(TOKEN)
 bot_user_name = crd.BOT_USER_NAME
+
+def timestr_to_ist(time_str:str):
+    time_str = time_str.split(':')
+    time_str[0] = int(time_str[0])
+    time_str[1] = int(time_str[1])
+    DT = datetime.combine(date.today(), time(hour=time_str[0], minute=time_str[1], second=int(0))) - timedelta(hours= int(5), minutes=int(30))
+    return DT.strftime("%H:%M:00")
 
 def SendMessage(text, keyboard=None):
     global chat_id
@@ -109,33 +113,6 @@ def showUpcomingEvents_second(id, event_desc):
     db['events'] = events_list
 
     SendMessage(msg)
-
-#############################################################################
-@bot.message_handler(state = 1)
-def Postpone_Time(message):
-    global temp
-    post_class = db['postponed']
-    class_time = f"{message.text}:00"
-    class_date = f'{datetime.today().strftime("%Y-%m-%d")} {class_time}'
-
-    sched.add_job(ClassMessage, trigger='date', run_date=class_date, id=f'p_{temp[0]}', args= [temp[0]])
-    post_class.append(f"{_SUBJECTS[temp[0]]}|{class_time}")
-    bot.delete_state(message.chat.id)
-    bot.send_message(chat_id = message.chat.id, text = f'{temp[0]} postponed')
-#############################################################################
-
-@bot.message_handler(state = 5)
-def AddClass_Time(message):
-    global temp     # Full name of the subject. Is a list but has only one element
-    add_class = db['added']     # Short name of subject with time seperated by '|'
-    class_time = f"{message.text}:00"
-    class_date = f'{datetime.today().strftime("%Y-%m-%d")} {class_time}'       # 2021-10-28 19:00:00
-
-    sched.add_job(ClassMessage, trigger='date', run_date=class_date, id=f'a_{temp[0]}', args=[temp[0]])
-    add_class.append(f"{_SUBJECTS[temp[0]]}|{class_time}")
-
-    bot.delete_state(message.chat.id)
-    bot.send_message(chat_id = message.chat.id, text = f'{temp[0]} added')
 
 def AddUpcomingEvents(id, Desc, event_time, offset_time):
     id1 = str(id) + '_1'
@@ -322,6 +299,20 @@ def PostponeClassFunc(message):
     msg = "Please select the class to be postponed. /cancel to cancel"
     bot.send_message(chat_id= message.chat.id, text=msg, reply_markup=class_markup('p'))
 
+#############################################################################
+@bot.message_handler(state = 1)
+def Postpone_Time(message):
+    global temp
+    post_class = db['postponed']
+    class_time = f"{message.text}:00"
+    class_date = f'{datetime.today().strftime("%Y-%m-%d")} {class_time}'
+
+    sched.add_job(ClassMessage, trigger='date', run_date=class_date, id=f'p_{temp[0]}', args= [temp[0]])
+    post_class.append(f"{_SUBJECTS[temp[0]]}|{class_time}")
+    bot.delete_state(message.chat.id)
+    bot.send_message(chat_id = message.chat.id, text = f'{temp[0]} postponed')
+#############################################################################
+
 @bot.message_handler(commands = ["showpostpone"])
 def ShowPostponeFunc(message):
     msg = ''
@@ -375,14 +366,47 @@ def DeleteCancelFunc(message):
 
     bot.send_message(chat_id=message.chat.id, text="Removed")
 
-@bot.message_handler(commands = ["showadded"])
-def ShowAddedFunc(message):
+@bot.message_handler(commands=["addclass"])
+def AddClassFunc(message):
+    global chat_id
+    chat_id = message.chat.id
+    
+    if is_not_CR(message):
+      return 'ok'
+    bot.set_state(message.chat.id, 4)
+    bot.send_message(chat_id=message.chat.id, text="Please select the class to be added today.", reply_markup=class_markup('a'))
+
+@bot.message_handler(state = 5)
+def AddClass_Time(message):
+    global temp     # Full name of the subject. Is a list but has only one element
+    add_class = db['added']     # Short name of subject with time seperated by '|'
+    class_time = f"{timestr_to_ist(message.text)}"
+    class_date = f'{datetime.today().strftime("%Y-%m-%d")} {class_time}'       # 2021-10-28 19:00:00
+
+    sched.add_job(ClassMessage, trigger='date', run_date=class_date, id=f'a_{temp[0]}', args=[temp[0]])
+    add_class.append(f"{_SUBJECTS[temp[0]]}|{class_time}")
+
+    bot.delete_state(message.chat.id)
+    bot.send_message(chat_id = message.chat.id, text = f'{temp[0]} added')
+
+@bot.message_handler(commands = ["showadd"])
+def ShowAddFunc(message):
     msg = ''
     for i in db['added']:
         msg += f"{i}\n"
     if msg == '':
         msg = 'No class added'
     bot.send_message(chat_id=message.chat.id, text=msg)
+
+@bot.message_handler(commands = ["deleteadd"])
+def DeleteAddFunc(message):
+    if is_not_CR(message):
+      return 'ok'
+      
+    del db['added']
+    db['added'] = []
+
+    bot.send_message(chat_id=message.chat.id, text="Removed")
 
 @bot.message_handler(regexp = "^/timetable")
 def TimeTableFunc(message):
@@ -448,23 +472,13 @@ def OffDaysFunc_Days(message):
     bot.delete_state(message.chat.id)
     global SHOW_NOTIF
     SHOW_NOTIF = False
-    sched.add_job(turn_on_notif, trigger='date', run_date=message.text+':00', id='trun_on_notif', replace_existing=True)
+    sched.add_job(turn_on_notif, trigger='date', run_date=message.text+':00', id='trun_on_notif', replace_existing=True)       # This datetime is in standard time.
     bot.send_message(chat_id=message.chat.id, text=f"Notification turned off for {message.text} days")
 
 @bot.message_handler(commands = ["offdays"])
 def OffDaysFunc(message):
     bot.set_state(message.chat.id, 3)
     bot.send_message(chat_id=message.chat.id, text="Till which date should the notification be switched off?\nWrite the date as year-month-day hour(24hrs):minute (eg: 2021-10-29 17:30)")
-
-@bot.message_handler(commands=["addclass"])
-def AddClass(message):
-    global chat_id
-    chat_id = message.chat.id
-    
-    if is_not_CR(message):
-      return 'ok'
-    bot.set_state(message.chat.id, 4)
-    bot.send_message(chat_id=message.chat.id, text="Please select the class to be added today.", reply_markup=class_markup('a'))
 
 @bot.message_handler(commands=['cancel'])
 def CancelFunc(message):
@@ -480,10 +494,6 @@ for slot in SLOTS:
     sched.add_job(UpcomingClass, 'cron', day_of_week= 'mon-fri', hour = _time[0], minute= _time[1], second= int(0), args = [slot], id= f'{slot[0]} {slot[1]}', replace_existing=True)
 
 def reset_daily():
-    # for key in db.keys():
-    #     print(key)
-    #     del db[key]
-
     db['events'] = []
     db['postponed'] = []
     db['cancelled'] = []
@@ -495,10 +505,6 @@ bot.add_custom_filter(custom_filters.StateFilter(bot))
 bot.add_custom_filter(custom_filters.IsDigitFilter())
 
 keep_alive.keep_alive()
-
-# def PingSite():
-#     requests.get('https://api.github.com')
-# sched.add_job(PingSite, 'interval', minutes=int(28))
 
 sched.start()
 bot.infinity_polling()
