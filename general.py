@@ -58,12 +58,18 @@ SUB_ATTENDANCE = {
     SUBJECTS['DCS'] : "https://eduserver.nitc.ac.in/mod/attendance/view.php?id=63352&view=1",
     SUBJECTS['LAB'] : "https://eduserver.nitc.ac.in/mod/attendance/view.php?id=65810&view=1",
     SUBJECTS['SS']  : "",
-    SUBJECTS['VE']  : "",
+    SUBJECTS['VE']  : "", 
     SUBJECTS['MA3'] : "",
     SUBJECTS['ECNT'] : ""
     # SUBJECTS['LAB2'] : ""
 }
 
+def tuple_to_str(tpl:tuple):
+    return f"{tpl[0]}:{tpl[1]}"
+
+def str_to_tuple(time_str:str):
+    time_str = time_str.split(':')
+    return tuple(int(time_str[0]), int(time_str[1]))
 
 def timeDict(DT, just_time= True):
     DT = DT.strftime("%Y %m %d %H %M") if type(DT) == datetime else DT
@@ -71,22 +77,22 @@ def timeDict(DT, just_time= True):
     if just_time:
         tpl = (int(DT[-2]), int(DT[-1]))
         return tpl
-    else:
-        dict = {'year': int(DT[0]), 'month': int(DT[1]), 'day': int(DT[2]), 'hour': int(DT[3]), 'minute': int(DT[4])}
-        return dict
+    # else:
+    #     dict = {'year': int(DT[0]), 'month': int(DT[1]), 'day': int(DT[2]), 'hour': int(DT[3]), 'minute': int(DT[4])}
+    #     return dict
 
-def compare_time(DT_now: tuple, DT_stored: tuple):
-    if DT_now[0] > DT_stored[0]:
+def compare_time(DT_1: tuple, DT_2: tuple):
+    if DT_1[0] > DT_2[0]:
         return 'greater'
-    elif DT_now[0] < DT_stored[0]:
+    elif DT_1[0] < DT_2[0]:
         return 'lesser'
     else:
-        if DT_now[1] >= DT_stored[1]:
+        if DT_1[1] >= DT_2[1]:
             return 'greater'
-        elif DT_now[1] < DT_stored[1]:
+        elif DT_1[1] < DT_2[1]:
             return 'lesser'
 
-def edit_time(DT : tuple, just_time=True,day=0, hour=0, minute=0, second=0):
+def edit_time(DT, just_time=True,day=0, hour=0, minute=0, second=0):
     if just_time:
         DateTime = datetime.combine(date.today(), time(hour=DT[0], minute=DT[1], second=0)) + timedelta(days=day,hours= hour, minutes= minute, seconds= second)
         DateTime = DateTime.strftime('%H %M').split()
