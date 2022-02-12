@@ -4,7 +4,7 @@ The bot sends notification of class 5 minutes prior to the class along with the 
 2. Add details in credential.py. Use @userinfobot toget group id. Creator id and username are optional if you want personalised functions.
 3. In general.py, add the class names, their meeting links and attendance links.
 
-<b>Functons<b/><br />
+Functons<br />
 /start - Greeting <br />
 /timetable - Timetable of the day <br />
 /nextclass - Next class that day <br />
