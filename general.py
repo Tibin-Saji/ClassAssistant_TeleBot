@@ -6,69 +6,71 @@ slot3 = "10:15"    # 10:10      7:40
 slot4 = "11:15"    # 11:10      8:40
 slot5 = "13:00"    # 12:55      10:25
 slot6 = "14:00"    # 13:55      11:25
-slot7 = "17:00"    # 16:55      14:25         11 30
+slot7 = "17:00"    # 16:55      14:25
 
 SLOTS = [slot1, slot2, slot3, slot4, slot5, slot6, slot7]
 
 SUBJECTS = {
     'NIL' : "No Class",
-    'SSD' : "Solid State Devices",
-    'SS'  : "Signals and Systems",
-    'DCS' : "Digital Circuits and Systems",
-    'ECNT': "Electrical Circuits and Network Theory",
-    'MA3' : "Mathematics III",
-    'VE'  : "Value Education",
-    'LAB': "DCS and DN Labs",
+    'EC1' : "Electronics Circuits I",
+    'EMFTA'  : "Electro-magnetic Field Theory A",
+    'EMFTB'  : "Electro-magnetic Field Theory B",
+    'CTS1A' : "Communnication Theory & Systems I A",
+    'CTS1B' : "Communnication Theory & Systems I B",
+    'MPMC': "Microprocessors & MicroconMicrocontrollers",
+    'MA4' : "Mathematics IV",
+    'MATUT' : "Mathematics Tutorial",
+    'LAB1': "EC Lab for R and MPMC Lab for S",
+    'LAB2': "EC Lab for S and MPMC Lab for R",
 
 }
 
 TIMETABLE = {
     SLOTS[0]:
-        [SUBJECTS['SSD'], SUBJECTS['NIL'], SUBJECTS['NIL'], SUBJECTS['DCS'], SUBJECTS['ECNT']],
+        [SUBJECTS['EC1'], SUBJECTS['CTS1B'], SUBJECTS['NIL'], SUBJECTS['MA4'], SUBJECTS['MPMC']],
     SLOTS[1]:
-        [SUBJECTS['SS'], SUBJECTS['MA3'], SUBJECTS['SSD'], SUBJECTS['NIL'], SUBJECTS['NIL']],
+        [SUBJECTS['NIL'], SUBJECTS['EMFTB'], SUBJECTS['EC1'], SUBJECTS['CTS1B'], SUBJECTS['NIL']],
     SLOTS[2]:
-        [SUBJECTS['DCS'], SUBJECTS['ECNT'], SUBJECTS['SS'], SUBJECTS['MA3'], SUBJECTS['SSD']],
+        [SUBJECTS['MA4'], SUBJECTS['MPMC'], SUBJECTS['EMFTA'], SUBJECTS['EMFTB'], SUBJECTS['EC1']],
     SLOTS[3]:
-        [SUBJECTS['NIL'], SUBJECTS['NIL'], SUBJECTS['DCS'], SUBJECTS['ECNT'], SUBJECTS['SS']],
+        [SUBJECTS['CTS1A'], SUBJECTS['NIL'], SUBJECTS['MA4'], SUBJECTS['MPMC'], SUBJECTS['EMFTA']],
     SLOTS[4]:
-        [SUBJECTS['MA3'], SUBJECTS['SSD'], SUBJECTS['NIL'], SUBJECTS['NIL'], SUBJECTS['NIL']],
+        [SUBJECTS['NIL'], SUBJECTS['EC1'], SUBJECTS['NIL'], SUBJECTS['NIL'], SUBJECTS['NIL']],
     SLOTS[5]:
-        [SUBJECTS['NIL'], SUBJECTS['DCS'], SUBJECTS['MA3'], SUBJECTS['LAB'], SUBJECTS['LAB']],
+        [SUBJECTS['MATUT'], SUBJECTS['NIL'], SUBJECTS['LAB1'], SUBJECTS['LAB2'], SUBJECTS['CTS1A']],
     SLOTS[6]:
-        [SUBJECTS['NIL'], SUBJECTS['NIL'], SUBJECTS['ECNT'], SUBJECTS['SS'], SUBJECTS['NIL']]
-    # SLOTS[7].strftime("%H %M"):
-    #     [SUBJECTS['NIL'], SUBJECTS['SSD'], SUBJECTS['ECNT'], SUBJECTS['MA3'], SUBJECTS['SS']]
-    # slotTest1.strftime("%H %M"):
-    #     ["TestClass1", "TestClass2","TestClass3", "TestClass4","TestClass5"]
+        [SUBJECTS['NIL'], SUBJECTS['NIL'], SUBJECTS['NIL'], SUBJECTS['NIL'], SUBJECTS['NIL']]
 }
 
 SUB_LINKS = {
-    SUBJECTS['SS'] : 'https://nitcalicut.webex.com/nitcalicut/j.php?MTID=mefb99f19ac24ea19aa15d24c6062d3b1',
-    SUBJECTS['DCS'] : 'https://nitcalicut.webex.com/nitcalicut/j.php?MTID=m8832367923e264671c7ca251b752ff21',
-    SUBJECTS['VE'] : "https://nitcalicut.webex.com/wbxmjs/joinservice/sites/nitcalicut/meeting/download/a44ee30a3147f25b9aaed3abfe578945?protocolUID=4740f7fad7e3791ad27366ef6924e4fd&MTID=m0e98d05b5dc051e41a310946d20fc481#noRefresh",
-    SUBJECTS['ECNT'] : "https://eduserver.nitc.ac.in/course/view.php?id=1856#section-2",
-    SUBJECTS['MA3'] : "https://eduserver.nitc.ac.in/course/view.php?id=2128",
-    SUBJECTS['SSD'] : "https://nitcalicut.webex.com/nitcalicut/j.php?MTID=m69c5a46661eb7fb44e703e32e4712f30",
-    SUBJECTS['LAB'] : ""
+    SUBJECTS['EC1'] : "https://eduserver.nitc.ac.in/course/view.php?id=2361#section-1",
+    SUBJECTS['EMFTA'] : "https://nitcalicut.webex.com/nitcalicut/j.php?MTID=m6a7175f6b973bf4c22a9bd361423459d",
+    SUBJECTS['EMFTB'] : "https://nitcalicut.webex.com/nitcalicut/o.php?AT=ST&SP=MC&BU=https%3A%2F%2Feduserver.nitc.ac.in%2Fmod%2Fwebexactivity%2Fview.php%3Fid%3D90519%26action%3Djoinmeeting",
+    SUBJECTS['CTS1A'] : "https://eduserver.nitc.ac.in/mod/webexactivity/view.php?id=90509",
+    SUBJECTS['CTS1B'] : "https://nitcalicut.webex.com/webappng/sites/nitcalicut/meeting/info/be740faf5b1140379d31346cc54b6514?siteurl=nitcalicut&MTID=me681e670b69c7cefb6103ef1b45ec249",
+    SUBJECTS['MPMC'] : "https://nitcalicut.webex.com/nitcalicut/j.php?MTID=m38558e55e47941e6943dfbcd380fe9d0",
+    SUBJECTS['MA4'] : "https://nitcalicut.webex.com/nitcalicut/j.php?MTID=m4f855125f95f1b5e54ebd21afc89e7e9",
+    SUBJECTS['MATUT'] : "",
+    SUBJECTS['LAB1'] : "",
+    SUBJECTS['LAB2'] : ""
 }
 
 SUB_ATTENDANCE = {
-    SUBJECTS['SSD'] : "https://eduserver.nitc.ac.in/mod/attendance/view.php?id=63280&view=1",
-    SUBJECTS['DCS'] : "https://eduserver.nitc.ac.in/mod/attendance/view.php?id=63352&view=1",
-    SUBJECTS['LAB'] : "https://eduserver.nitc.ac.in/mod/attendance/view.php?id=65810&view=1",
-    SUBJECTS['SS']  : "",
-    SUBJECTS['VE']  : "", 
-    SUBJECTS['MA3'] : "",
-    SUBJECTS['ECNT'] : ""
+    SUBJECTS['EC1'] : "https://eduserver.nitc.ac.in/course/view.php?id=2361#section-1",
+    SUBJECTS['EMFTA'] : "https://eduserver.nitc.ac.in/mod/attendance/view.php?id=89332&view=1",
+    SUBJECTS['EMFTB'] : "https://eduserver.nitc.ac.in/mod/attendance/view.php?id=90520&view=1",
+    SUBJECTS['CTS1A'] : "https://eduserver.nitc.ac.in/mod/attendance/view.php?id=90511&view=1",
+    SUBJECTS['CTS1B'] : "",
+    SUBJECTS['MPMC'] : "https://eduserver.nitc.ac.in/mod/attendance/view.php?id=90700&view=1",
+    SUBJECTS['MA4'] : "",
+    SUBJECTS['MATUT'] : "",
+    SUBJECTS['LAB1'] : "",
+    SUBJECTS['LAB2'] : ""
 }
-
-def tuple_to_str(tpl:tuple):
-    return f"{tpl[0]}:{tpl[1]}"
 
 def str_to_tuple(time_str:str):
     time_str = time_str.split(':')
-    return tuple(int(time_str[0]), int(time_str[1]))
+    return (int(time_str[0]), int(time_str[1]))
 
 def compare_time(DT_1: str, DT_2: str):
     DT_1 = str_to_tuple(DT_1)
@@ -84,7 +86,12 @@ def compare_time(DT_1: str, DT_2: str):
         elif DT_1[1] < DT_2[1]:
             return 'lesser'
 
-def edit_time(DT:str, day:int=0, hour:int=0, minute:int=0, second:int=0):
+def edit_time(DT:str, day:int=0, hour:int=0, minute:int=0, second:int=0, change_day = True):
     DT = str_to_tuple(DT)
-    DateTime = datetime.combine(date.today(), time(hour=DT[0], minute=DT[1], second=0)) + timedelta(days=day,hours= hour, minutes= minute, seconds= second)
+    DT_now = datetime.combine(date.today(), time(hour=DT[0], minute=DT[1], second=0))
+    DateTime = DT_now + timedelta(days=day,hours= hour, minutes= minute, seconds= second)
+    if not change_day:
+        DT_diff = DateTime - datetime.combine(date.today(), time(0, 0, 0))
+        if DT_diff.total_seconds() < 0:
+            return '-1:-1'
     return DateTime.strftime('%H:%M')

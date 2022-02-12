@@ -1,4 +1,4 @@
-# postpone and notif_off is in UTC
+# postpone and is in UTC
 # If program re-run, no job but present in db
 # postpone the next day's class
 # postponing on sat and sun shouldnt be allowed 
@@ -35,7 +35,6 @@ TIBIN_USER_NAME = crd.CREATOR_USER_NAME
 GRP_ID = crd.GRP_ID
 
 global SHOW_NOTIF
-SHOW_NOTIF = True
 
 global temp # variable to add the values taken from different state functions
 
@@ -47,6 +46,7 @@ db['events'] = []
 db['postponed'] = []
 db['cancelled'] = []
 db['added'] = []
+db['SHOW_NOTIF'] = True
 
 TOKEN = crd.BOT_TOKEN
 
@@ -56,88 +56,63 @@ sched.remove_all_jobs()
 bot = TeleBot(TOKEN)
 bot_user_name = crd.BOT_USER_NAME
 
-def timestr_to_ist(time_str:str):
+def time_uct_to_ist(time_str:str):
+    time_str = time_str.split(':')
+    time_str[0] = int(time_str[0])
+    time_str[1] = int(time_str[1])
+    DT = datetime.combine(date.today(), time(hour=time_str[0], minute=time_str[1], second=int(0))) + timedelta(hours= int(5), minutes=int(30))
+    return DT.strftime("%H:%M")
+
+def time_ist_to_uct(time_str:str):
     time_str = time_str.split(':')
     time_str[0] = int(time_str[0])
     time_str[1] = int(time_str[1])
     DT = datetime.combine(date.today(), time(hour=time_str[0], minute=time_str[1], second=int(0))) - timedelta(hours= int(5), minutes=int(30))
-    return DT.strftime("%H:%M:00")
+    return DT.strftime("%H:%M")
+
+def time_ist_to_ast(time_str:str):
+    time_str = time_str.split(':')
+    time_str[0] = int(time_str[0])
+    time_str[1] = int(time_str[1])
+    DT = datetime.combine(date.today(), time(hour=time_str[0], minute=time_str[1], second=int(0))) - timedelta(hours= int(2), minutes=int(30))
+    return DT.strftime("%H:%M")
 
 def SendMessage(text, keyboard=None):
     global chat_id
     bot.send_message(chat_id= chat_id, text=str(text),  reply_markup=keyboard)
+
+def isInTime(DT:str):
+    '''
+    DT should be time in ist HH:MM format and it will check if that time is already over that day.
+    If it is over, it sends a message telling so and returns false, else it retruns true.
+    '''
+    if compare_time(DT, edit_time(datetime.today().strftime("%H:%M"), hour=5, minute=30)) == 'lesser':
+        TimeJoke = ["Time Travel hasn't been discovered yet", "My watch only goes forward", "Oops! Is the event already over?"]
+        bot.send_message(chat_id=chat_id, text=TimeJoke[random.randint(0, len(TimeJoke)) - 1])
+        return False
+    else:
+        return True
 
 def is_not_CR(message):
     if message.from_user.username not in ADMINS:
         msg = 'Only CRs can access this command'
         bot.send_message(chat_id=message.chat.id, text=msg)
         return False
-
-def deleteevent(id):
-    id1 = str(id)+ '_1'
-    id2 = str(id) + '_2'
-
-    event_desc = ''
-    events_list = db['events']
-    for i in range(len(events_list)):
-        event = events_list[i].split('|')
-        if event[0] == id:
-            events_list.pop(i)
-            event_desc = event[1]
-    db['events'] = events_list
-
-    try:
-        sched.remove_job(id1)
-        sched.remove_job(id2)
-    except:
-        return ''
-
-    return event_desc
-
-def showUpcomingEvents_first(event_desc, offset_time):
-    msg = f'{event_desc} in {offset_time[0]} hours and {offset_time[1]} minutes.'
-    SendMessage(msg)
-
-def showUpcomingEvents_second(id, event_desc):
-    msg = f'{event_desc} in 5 minutes.'
-
-    events_list = db['events']
-    for i in range(len(events_list)):
-        event = events_list[i].split('|')
-        if event[0] == id:
-            events_list.pop(i)
-            event_desc = event[1]
-    db['events'] = events_list
-
-    SendMessage(msg)
-
-def AddUpcomingEvents(id, Desc, event_time, offset_time):
-    id1 = str(id) + '_1'
-    id2 = str(id) + '_2'
-
-    try:
-        event_time = event_time.split()
-        if len(event_time) != 5:
-            return
-        event_time = datetime(int(event_time[0]), int(event_time[1]), int(event_time[2]), int(event_time[3]), int(event_time[4]), int(0))
-        event_time = event_time - timedelta(hours = 5, minutes = 30)
-
-        if offset_time != '0 0':
-            offset_time = offset_time.split()
-            if len(offset_time) != 2:
-                return
-            _time_1 = event_time - timedelta(hours = int(offset_time[0]), minutes = int(offset_time[1]))
-            sched.add_job(showUpcomingEvents_first, 'date', id = id1, run_date = _time_1, args = [Desc, offset_time])
-
-        _time_2 = event_time - timedelta(minutes = int(5))
-        sched.add_job(showUpcomingEvents_second, 'date', id = id2, run_date = _time_2, args = [id, Desc])
-    except:
-        return
     
 @bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
     global chat_id
     global temp
+
+    data = call.data
+
+    if data == "Turn On":
+        db['SHOW_NOTIF'] = True
+        bot.send_message(chat_id= chat_id, text="Turned On")
+    elif data == "Turn Off":
+        db['SHOW_NOTIF'] = False
+        bot.send_message(chat_id= chat_id, text="Turned Off")
+
     data = call.data.split("_")
     if data[0] == 'c':
         cancel_class = db['cancelled']
@@ -155,8 +130,19 @@ def callback_query(call):
 
     elif data[0] == 'a':
         temp = [data[1]]
-        bot.set_state(chat_id, 5)
+        bot.set_state(chat_id, 2)
         bot.send_message(chat_id = chat_id, text = f"Please enter the time in 24 hrs (eg: 17:30)")
+
+    elif data[0] == 'e':
+        sched.remove_job(call.data)
+        events = db['events']
+        for i in range(len(events)):
+          if events[i][0] == data[1]:
+            events.pop(i)
+        db['events'] = events
+        msg = f'\"{data[1]} deleted\"'
+        bot.send_message(chat_id = chat_id, text = msg)
+
 
 def class_markup(change_type:str):
     markup = types.InlineKeyboardMarkup()
@@ -192,16 +178,16 @@ def ClassMessage(subject):
             return 'ok'
 
     if  subject != SUBJECTS['NIL']:
-        if subject_short != 'LAB':
+        if SUB_LINKS[subject] != "":
             keyboard.add(types.InlineKeyboardButton(text="Class Link", url=SUB_LINKS[subject]))
             
 
-            if SUB_ATTENDANCE[subject] != "":
-                keyboard.add(types.InlineKeyboardButton(text="Attendance", url=SUB_ATTENDANCE[subject]))
+        if SUB_ATTENDANCE[subject] != "":
+            keyboard.add(types.InlineKeyboardButton(text="Attendance", url=SUB_ATTENDANCE[subject]))
 
         msg = f"You have {subject} in 5 min."
 
-        bot.send_message(crd.GRP_ID, msg, reply_markup=keyboard)
+        bot.send_message(GRP_ID, msg, reply_markup=keyboard)
 
 @bot.message_handler(commands=['start'])
 def StartFunc(message):
@@ -213,6 +199,12 @@ def NextClassFunc(message):
   currentTime = edit_time(datetime.now().strftime("%H:%M"), hour = int(5), minute= int(30))
   weekday = datetime.today().weekday()
   msg = "No more class today"
+
+  offset_time = [0,0]
+
+  if message.from_user.username == TIBIN_USER_NAME:
+      offset_time = [-2,-30]
+
   for slot in SLOTS:
       if  compare_time(slot, currentTime) == 'greater':
           if weekday in [5, 6]:
@@ -220,68 +212,90 @@ def NextClassFunc(message):
               break
           subject = TIMETABLE[slot][weekday]
           if subject != SUBJECTS['NIL']:
-              msg = "You have {TIMETABLE[slot][weekday]} at {slot}"
+              msg = f"You have {TIMETABLE[slot][weekday]} at {edit_time(slot, hour = offset_time[0], minute= offset_time[1])}"
               break
   bot.send_message(chat_id=message.chat.id, text=msg)
 
-@bot.message_handler(regexp = "^/addevent")
-def AddEventFunc(message):
-  text = message.text
+@bot.message_handler(commands = ["addevent"])
+def EventDescFunc(message):
   if is_not_CR(message):
       return 'ok'
-
-  # /addevent|Desc|Final Time(yyyy month day hour minute)|Offset Time(hour minute)
-  text = text.split('|')
-  if text[0] == '/addevent' and len(text) == 4:
-      event_time = text[2].split()
-      event_time = datetime(int(event_time[0]), int(event_time[1]), int(event_time[2]), int(event_time[3]), int(event_time[4]), int(0))
-
-      if (datetime.today() + timedelta(hours = int(5), minutes = int(30))) >= event_time:
-          TimeJoke = ["Time Travel hasn't been discovered yet", "My watch only goes forward", "Oops! Is the event already over?"]
-          msg = TimeJoke[random.randint(0,2)]
-
-      else:
-          global EVENT_INDEX
-          EVENT_INDEX += 1
-          if EVENT_INDEX == 100:
-              EVENT_INDEX = 1
-          data = f'{EVENT_INDEX}|{text[1]}|{text[2]}|{text[3]}\n'
-          db['events'].append(data)
-          AddUpcomingEvents(EVENT_INDEX, text[1], text[2], text[3])
-          msg = f'"{text[1]}" added'
-
-  else:
-      msg = 'Please follow format'
+  
+  msg = 'Please enter the event description'
+  bot.set_state(message.chat.id, 3)
   bot.send_message(chat_id=message.chat.id, text=msg)
 
+@bot.message_handler(state = 3)
+def EventTime1Func(message):
+  global temp
+  temp = []
+  temp.append(message.text)
+  msg = 'Enter the deadline for the event in YYYY-MM-DD HH:MM (24-hr) format'
+  bot.set_state(message.chat.id, 4)
+  bot.send_message(chat_id=message.chat.id, text=msg)
+
+@bot.message_handler(state = 4)
+def EventTime2Func(message):
+  global temp
+  temp.append(message.text)
+  msg = 'Enter the reminder time for the event in HH:MM 24-hr format'
+  bot.set_state(message.chat.id, 5)
+  bot.send_message(chat_id=message.chat.id, text=msg)
+
+@bot.message_handler(state = 5)
+def EventSetFunc(message):
+  global temp
+  temp.append(message.text)
+  msg = 'Event Added'
+  bot.delete_state(message.chat.id)
+  event_date = temp[1].split()[0] + ' ' + temp[2] + ':00'
+  sched.add_job(EventJob1Call, trigger='date', run_date=event_date, id=f"e_{temp[0]}", args= [temp[0], temp[1]])
+  db['events'].append(temp)
+  bot.send_message(chat_id=message.chat.id, text=msg)
+
+def EventJob1Call(Desc:str, deadline:str):
+  msg = f'You have \"{Desc}\" at {deadline}'
+  sched.add_job(EventJob2Call, trigger='date', run_date=deadline, id=f'e_{temp[0]}', args= [temp[0]])
+  bot.send_message(chat_id=GRP_ID, text=msg)
+
+def EventJob2Call(Desc:str):
+  events = db['events']
+  for i in range(len(events)):
+      if events[i][0] == Desc:
+          events.pop(i)
+  db['events'] = events
+  msg = f'You have \"{Desc}\" now'
+  bot.send_message(chat_id=GRP_ID, text=msg)
+  
 @bot.message_handler(commands = ["showevents"])
 def ShowEventFunc(message):
     msg = ''
     for event in db['events']:
-        event = event.split('|')
-        if(len(event) == int(4)):
-            msg += f'{event[0]} | {event[1]} | {event[2]} | {event[3]}\n'
+      msg += f'{event[0]}  {event[1]}  {event[2]}\n'
     if msg == '':
-        msg = 'No events found'
+      msg = 'No events found'
     bot.send_message(chat_id=message.chat.id, text=msg)
 
-@bot.message_handler(regexp = "^/deleteevent")
+@bot.message_handler(commands = ["deleteevent"])
 def DeleteEventFunc(message):
     if is_not_CR(message):
       return 'ok'
 
-    text = message.text
+    global chat_id
+    chat_id = message.chat.id
 
-    text = text.split('|')
-    if len(text) == 2:
-        event_desc = deleteevent(text[1])
-        if event_desc == '':
-            msg = 'Something went wrong.'
-        else:
-            msg = f'"{event_desc}" deleted'
+    msg = 'Select the event to be deleted'
+
+    markup = types.InlineKeyboardMarkup()
+    markup.row_width = 1
+
+    if len(db['events']) > 0:
+        for event in db['events']:
+            markup.add(types.InlineKeyboardButton(event[0], callback_data=f"e_{event[0]}"))    
     else:
-        msg = 'Please follow format'
-    bot.send_message(chat_id=message.chat.id, text=msg)
+        markup = None
+
+    bot.send_message(chat_id=message.chat.id, text=msg, reply_markup = markup)
 
 @bot.message_handler(commands = ["postponeclass"])
 def PostponeClassFunc(message):
@@ -291,19 +305,26 @@ def PostponeClassFunc(message):
     if is_not_CR(message):
       return 'ok'
 
-    msg = "Please select the class to be postponed. /cancel to cancel"
-    bot.send_message(chat_id= message.chat.id, text=msg, reply_markup=class_markup('p'))
+    if (datetime.today().weekday() not in [5,6]):
+        msg = "Please select the class to be postponed. /cancel to cancel"
+        bot.send_message(chat_id= message.chat.id, text=msg, reply_markup=class_markup('p'))
+    else:
+        msg = "No classes to postpone today"
+        bot.send_message(chat_id= message.chat.id, text=msg)
 
 #############################################################################
 @bot.message_handler(state = 1)
 def Postpone_Time(message):
     global temp
     post_class = db['postponed']
-    class_time = f"{message.text}:00"
+    if not isInTime(time_ist_to_uct(message.text)):
+        bot.set_state(message.chat.id, 1)
+        return 'ok'
+    class_time = f"{edit_time(time_ist_to_uct(message.text), minutes = -5)}:00"
     class_date = f'{datetime.today().strftime("%Y-%m-%d")} {class_time}'
 
     sched.add_job(ClassMessage, trigger='date', run_date=class_date, id=f'p_{temp[0]}', args= [temp[0]])
-    post_class.append(f"{_SUBJECTS[temp[0]]}|{class_time}")
+    post_class.append(f"{_SUBJECTS[temp[0]]}|{message.text}")
     bot.delete_state(message.chat.id)
     bot.send_message(chat_id = message.chat.id, text = f'{temp[0]} postponed')
 #############################################################################
@@ -339,8 +360,12 @@ def CancelClassFunc(message):
     if is_not_CR(message):
       return 'ok'
 
-    msg = "Please select the class to be cancelled"
-    bot.send_message(chat_id= message.chat.id, text=msg, reply_markup=class_markup('c'))
+    if (datetime.today().weekday() not in [5,6]):
+        msg = "Please select the class to be cancelled"
+        bot.send_message(chat_id= message.chat.id, text=msg, reply_markup=class_markup('c'))
+    else:
+        msg = "No classes to cancel today"
+        bot.send_message(chat_id= message.chat.id, text=msg)
 
 @bot.message_handler(commands = ["showcancel"])
 def ShowCancelFunc(message):
@@ -371,15 +396,18 @@ def AddClassFunc(message):
     bot.set_state(message.chat.id, 4)
     bot.send_message(chat_id=message.chat.id, text="Please select the class to be added today.", reply_markup=class_markup('a'))
 
-@bot.message_handler(state = 5)
+@bot.message_handler(state = 2)
 def AddClass_Time(message):
     global temp     # Full name of the subject. Is a list but has only one element
-    add_class = db['added']     # Short name of subject with time seperated by '|'
-    class_time = edit_time(message.text, hour=-5, minute=-30) + ":00"
-    class_date = f'{datetime.today().strftime("%Y-%m-%d")} {class_time}'       # 2021-10-28 19:00:00
+    add_class = db['added']     # Short name of subjects with time seperated by '|'
+    if not isInTime(message.text):
+        bot.set_state(message.chat.id, 5)
+        return 'ok'
+    class_time = edit_time(time_ist_to_uct(message.text), minutes = -5) + ":00"
+    run_date = f'{datetime.today().strftime("%Y-%m-%d")} {class_time}'       # 2021-10-28 19:00:00
 
-    sched.add_job(ClassMessage, trigger='date', run_date=class_date, id=f'a_{temp[0]}', args=[temp[0]])
-    add_class.append(f"{_SUBJECTS[temp[0]]}|{class_time}")
+    sched.add_job(ClassMessage, trigger='date', run_date=run_date, id=f'a_{temp[0]}', args=[temp[0]])
+    add_class.append(f"{_SUBJECTS[temp[0]]}|{message.text}")
 
     bot.delete_state(message.chat.id)
     bot.send_message(chat_id = message.chat.id, text = f'{temp[0]} added')
@@ -408,91 +436,94 @@ def TimeTableFunc(message):
     key_list = list(SUBJECTS.keys())
     val_list = list(SUBJECTS.values())
 
-    text = message.text
-    isTibin = True
-    if message.from_user.username != TIBIN_USER_NAME:
-        isTibin = False
+    offset_time = [0,0]
 
-    is_today = False
+    text = message.text
+    if(message.from_user.username == TIBIN_USER_NAME):
+        offset_time = [-2,-30]
 
     try:
         text = text.split('|')
-        week = {'mon' : int(0), 'tue' : int(1), 'wed' : int(2), 'thur' : int(3), 'fri' : int(4)}
-        week_full = {int(0) : 'Monday', int(1) : 'Tueday', int(2) : 'Wednesday', int(3) : 'Thursday', int(4) : 'Friday'}
+        week = {'mon' : int(0), 'tue' : int(1), 'wed' : int(2), 'thur' : int(3), 'fri' : int(4), 'sat' : int(5), 'sun' : int(6)}
+        week_full = {int(0) : 'Monday', int(1) : 'Tueday', int(2) : 'Wednesday', int(3) : 'Thursday', int(4) : 'Friday', int(5) : 'Saturday', int(6) : 'Sunday'}
         if text[0] == '/timetable' and len(text) == 2:
-            is_today = False
+            #is_today = False
             n_week = week[text[1].lower()]
 
         else:
-            is_today = True
+            #is_today = True
             if (datetime.today().hour < int(16)):
                 n_week = datetime.today().weekday()
+            elif (datetime.today().weekday() > 4):
+                n_week = 0;
             else:
                 n_week = datetime.today().weekday() + 1
-                if n_week > int(4):
-                    n_week = int(0)
-            
-        if isTibin: 
-            offset_time = (int(-2), int(-30))
+
+        msg = f"*{week_full[n_week]}*:\n\n"
+
+        if n_week > int(4):
+            msg += "No class today\n"
+
         else:
-            offset_time = (int(0), int(0))
+            for slot in SLOTS:
+                class_name = TIMETABLE[slot][n_week]
 
-        msg = week_full[n_week] + ' :\n\n'
-        for slot in SLOTS:
-            class_name = TIMETABLE[slot][n_week]
-
-            if is_today:
                 subject_short = key_list[val_list.index(class_name)]
 
-            if subject_short in db['cancelled']:
-                class_name = f"Cancelled {subject_short}"
+                if subject_short in db['cancelled']:
+                    class_name = f"Cancelled {subject_short}"
 
-            slot_time = edit_time(slot, hour = offset_time[0], minute = offset_time[1])
-            msg += f'{slot_time}     {class_name}\n'
+                msg += f'{edit_time(slot, hour = offset_time[0], minute= offset_time[1])}    {class_name}\n'
 
-        bot.send_message(chat_id=message.chat.id, text=msg)
+        
+        if len(db['added']) != 0:
+            msg += "\n*Added Classes*\n\n"
+            for cls in db['added']:
+                cls = cls.split('|')
+                msg += f"{edit_time(cls[1], hour = offset_time[0], minute= offset_time[1])}    {SUBJECTS[cls[0]]}\n"
+
+        if len(db['postponed']) != 0:
+            msg += "\n*Postponed Classes*\n\n"
+            for cls in db['postponed']:
+                cls = cls.split('|')
+                msg += f"{edit_time(cls[1], hour = offset_time[0], minute= offset_time[1])}    {SUBJECTS[cls[0]]}\n"
+        
+        if len(db['cancelled']) != 0:
+            msg += "\n*Cancelled Classes*\n\n"
+            for cls in db['cancelled']:
+                msg += f"{cls}"
+
+        bot.send_message(chat_id=message.chat.id, text=msg, parse_mode='MARKDOWN')
     
     except Exception as e:
         print(e)
 
     return 'ok'
 
-def turn_on_notif ():
-    global SHOW_NOTIF
-    SHOW_NOTIF = True
-    sched.delete_job('turn_on_notif')
+@bot.message_handler(commands = ["notifswitch"])
+def NotifSwitchFunc(message):
+    global chat_id 
+    chat_id = message.chat.id
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton("Turn On", callback_data="Turn On"),types.InlineKeyboardButton("Turn Off", callback_data="Turn Off"))    
+    bot.send_message(chat_id=message.chat.id, text="Turn on or turn off notification.", reply_markup= markup)
 
-@bot.message_handler(state=3)
-def OffDaysFunc_Days(message):
-    bot.delete_state(message.chat.id)
-    global SHOW_NOTIF
-    SHOW_NOTIF = False
-    run_date = message.text.split()
-    run_date[1] = edit_time(run_date[1], hour= -5, minute= -30) + ":00"
-    run_date = run_date[0] + " " + run_date[1]
-    sched.add_job(turn_on_notif, trigger='date', run_date=run_date, id='trun_on_notif', replace_existing=True)       # This datetime is in standard time.
-    bot.send_message(chat_id=message.chat.id, text=f"Notification turned off for {message.text} days")
-
-@bot.message_handler(commands = ["offdays"])
-def OffDaysFunc(message):
-    bot.set_state(message.chat.id, 3)
-    bot.send_message(chat_id=message.chat.id, text="Till which date should the notification be switched off?\nWrite the date as year-month-day hour(24hrs):minute (eg: 2021-10-29 17:30)")
-
-@bot.message_handler(commands=['cancel'])
+@bot.message_handler(state = "*", commands=['cancel'])
 def CancelFunc(message):
     bot.delete_state(message.chat.id)
     bot.send_message(message.chat.id, "The command has been cancelled")
 
 def UpcomingClass(slot):
+    if db['SHOW_NOTIF'] == False:
+        return
     subject = TIMETABLE[slot][datetime.today().weekday()]
     ClassMessage(subject)
 
 for slot in SLOTS:
-    _time=edit_time(slot, minute= -5).split(':')
+    _time=edit_time(time_ist_to_uct(slot), minute= -5).split(':')
     sched.add_job(UpcomingClass, 'cron', day_of_week= 'mon-fri', hour = _time[0], minute= _time[1], second= int(0), args = [slot], id= f'{slot}', replace_existing=True)
 
 def reset_daily():
-    db['events'] = []
     db['postponed'] = []
     db['cancelled'] = []
     db['added'] = []
