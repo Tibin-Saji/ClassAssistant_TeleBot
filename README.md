@@ -5,14 +5,14 @@ The bot sends notification of class 5 minutes prior to the class along with the 
 3. In general.py, add the class names, their meeting links and attendance links.
 
 Functons
-/start - Greeting /n
-/timetable - Timetable of the day 
-/nextclass - Next class that day 
-/cancelclass - Cancel a class of the day (CR) 
-/showcancel - List of classes cancelled 
-/deletecancel - Clear list of cancelled classes (CR) 
-/postponeclass - Postpone a class of the day to a specific time (CR) 
-/showpostpone - List of class postponed 
-/deletepostpone - Clear list of postponed classes (CR) 
-/notifswitch - Turn of or on notification (CR)
-/cancel - cancel a command thread
+/start - Greeting <br />
+/timetable - Timetable of the day <br />
+/nextclass - Next class that day <br />
+/cancelclass - Cancel a class of the day (CR) <br />
+/showcancel - List of classes cancelled <br />
+/deletecancel - Clear list of cancelled classes (CR) <br />
+/postponeclass - Postpone a class of the day to a specific time (CR) <br />
+/showpostpone - List of class postponed <br />
+/deletepostpone - Clear list of postponed classes (CR) <br />
+/notifswitch - Turn of or on notification (CR)<br />
+/cancel - cancel a command thread<br />
