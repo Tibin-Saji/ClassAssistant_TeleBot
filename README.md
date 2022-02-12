@@ -5,7 +5,7 @@ The bot sends notification of class 5 minutes prior to the class along with the 
 3. In general.py, add the class names, their meeting links and attendance links.
 
 Functons
-/start - Greeting 
+/start - Greeting /n
 /timetable - Timetable of the day 
 /nextclass - Next class that day 
 /cancelclass - Cancel a class of the day (CR) 
